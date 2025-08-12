@@ -1,21 +1,51 @@
 import { FastifyInstance } from "fastify";
+import { User } from "knex/types/tables";
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import { db } from "../db";
 
 export function usersRoutes(app: FastifyInstance) {
-  app.get("/", async (request, response) => {
-    // TODO: Criar usuário
-    const teste = await db("sqlite_sequence").select();
-    console.log(teste);
-    return response.status(200).send(teste);
+  app.post("/", async (request, reply) => {
+    const createUserBodySchema = z.object({
+      name: z.string(),
+      email: z.string(),
+    });
+
+    const { name, email } = createUserBodySchema.parse(request.body);
+
+    const alreadyExists = await db("users").where("email", email).first();
+
+    if (alreadyExists) {
+      return reply.status(400).send("User already exists!");
+    }
+
+    const session_id = randomUUID();
+
+    const user: User = {
+      id: randomUUID(),
+      session_id,
+      name,
+      email,
+      created_at: new Date().toISOString(),
+    };
+
+    const newUser = await db("users").insert(user).returning("*");
+
+    reply.setCookie("sessionId", session_id, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 1, // 1 Dia
+    });
+
+    return reply.status(200).send(newUser);
   });
 
-  app.get("/login", (request, response) => {
+  app.get("/login", (request, reply) => {
     // TODO: Realizar login e salvar sessão
-    response.send("users");
+    reply.send("users");
   });
 
-  app.get("/metrics", (request, response) => {
+  app.get("/metrics", (request, reply) => {
     // TODO: Obter métricas do usuário
-    response.send("users");
+    reply.send("users");
   });
 }
