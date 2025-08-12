@@ -39,9 +39,31 @@ export function usersRoutes(app: FastifyInstance) {
     return reply.status(200).send(newUser);
   });
 
-  app.get("/login", (request, reply) => {
-    // TODO: Realizar login e salvar sessão
-    reply.send("users");
+  app.post("/login", async (request, reply) => {
+    const { body } = request;
+
+    const loginSchemaBody = z.object({
+      email: z.email(),
+    });
+
+    const { email } = loginSchemaBody.parse(body);
+
+    const user = await db("users").where("email", email).first();
+
+    if (!user) {
+      return reply.status(404).send("User not found.");
+    }
+
+    const session_id = randomUUID();
+
+    await db("users").update("session_id", session_id).where("id", user.id);
+
+    reply.setCookie("sessionId", session_id, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 1, // 1 Dia
+    });
+
+    reply.status(204).send();
   });
 
   app.get("/metrics", (request, reply) => {
