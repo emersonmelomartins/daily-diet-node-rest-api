@@ -3,6 +3,7 @@ import { User } from "knex/types/tables";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db } from "../db";
+import { checkUserExists } from "../middlewares/check-user-exists";
 
 export function usersRoutes(app: FastifyInstance) {
   app.post("/", async (request, reply) => {
@@ -66,8 +67,50 @@ export function usersRoutes(app: FastifyInstance) {
     return reply.status(204).send();
   });
 
-  app.get("/metrics", (request, reply) => {
-    // TODO: Obter métricas do usuário
-    return reply.send("users");
-  });
+  app.get(
+    "/metrics",
+    {
+      preHandler: checkUserExists,
+    },
+    async (request, reply) => {
+      const { id: user_id } = request.user;
+
+      let meals = await db("meals as m").where("user_id", user_id);
+      meals = meals
+        .map((meal) => ({
+          ...meal,
+          is_on_diet: meal.is_on_diet === 1,
+        }))
+        .sort((a, b) => a.meal_time.localeCompare(b.meal_time));
+
+      const totalMeals = meals.length;
+      const totalMealsOnDiet = meals.filter((meal) => meal.is_on_diet).length;
+      const totalMealsNotOnDiet = meals.filter(
+        (meal) => !meal.is_on_diet
+      ).length;
+
+      let bestSequencialStreak = 0;
+      let streakCounter = 0;
+      for (let i = 0; i < meals.length; i++) {
+        const currentMeal = meals[i];
+
+        if (currentMeal.is_on_diet) {
+          streakCounter++;
+        } else {
+          streakCounter = 0;
+        }
+
+        if (streakCounter > bestSequencialStreak) {
+          bestSequencialStreak = streakCounter;
+        }
+      }
+
+      return reply.send({
+        totalMeals,
+        totalMealsOnDiet,
+        totalMealsNotOnDiet,
+        bestSequencialStreak,
+      });
+    }
+  );
 }
