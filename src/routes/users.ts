@@ -63,11 +63,11 @@ export function usersRoutes(app: FastifyInstance) {
       maxAge: 60 * 60 * 24 * 1, // 1 Dia
     });
 
-    reply.status(204).send();
+    return reply.status(204).send();
   });
 
   app.get("/metrics", (request, reply) => {
     // TODO: Obter métricas do usuário
-    reply.send("users");
+    return reply.send("users");
   });
 }
