@@ -70,17 +70,23 @@ export function mealsRoutes(app: FastifyInstance) {
     const { id } = getMealSchemaParam.parse(request.params);
 
     const meal = await db("meals as m")
-      .join("users as u", "m.user_id", "u.session_id")
+      .join("users as u", "u.id", "m.user_id")
       .where("u.session_id", sessionId)
       .where("m.id", id)
       .select(
         "m.id",
         "m.name",
         "m.description",
+        "m.meal_time",
+        "m.is_on_diet",
         "m.created_at",
-        "m.updated_at",
-        "u.id as user_id"
-      );
+        "m.updated_at"
+      )
+      .first();
+
+    if (!meal) {
+      return reply.status(404).send("Meal not found.");
+    }
 
     return reply.send(meal);
   });
