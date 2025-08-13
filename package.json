@@ -6,7 +6,9 @@
     "dev": "tsx watch src/server.ts",
     "knex": "node --no-warnings --import tsx ./node_modules/knex/bin/cli.js",
     "migrate:make": "npm run knex migrate:make",
-    "migrate:latest": "npm run knex migrate:latest"
+    "migrate:latest": "npm run knex -- migrate:latest",
+    "migrate:rollback": "npm run knex -- migrate:rollback",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +24,10 @@
   },
   "devDependencies": {
     "@types/node": "^24.2.1",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
     "tsx": "^4.20.3",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   }
 }
