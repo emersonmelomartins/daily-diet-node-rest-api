@@ -30,14 +30,14 @@ export function usersRoutes(app: FastifyInstance) {
       created_at: new Date().toISOString(),
     };
 
-    const newUser = await db("users").insert(user).returning("*");
+    await db("users").insert(user);
 
     reply.setCookie("sessionId", session_id, {
       path: "/",
       maxAge: 60 * 60 * 24 * 1, // 1 Dia
     });
 
-    return reply.status(200).send(newUser);
+    return reply.status(204).send();
   });
 
   app.post("/login", async (request, reply) => {
