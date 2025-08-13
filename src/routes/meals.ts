@@ -88,16 +88,78 @@ export function mealsRoutes(app: FastifyInstance) {
       return reply.status(404).send("Meal not found.");
     }
 
+    meal.is_on_diet = meal.is_on_diet === 1;
+
     return reply.send(meal);
   });
 
-  app.put("/:id", (request, reply) => {
-    // TODO: Editar uma refeição
-    return reply.send("meals");
+  app.put("/:id", async (request, reply) => {
+    const { sessionId } = request.cookies;
+
+    const getMealSchemaParam = z.object({
+      id: z.string(),
+    });
+
+    const { id } = getMealSchemaParam.parse(request.params);
+
+    const meal = await db("meals as m")
+      .join("users as u", "u.id", "m.user_id")
+      .where("u.session_id", sessionId)
+      .where("m.id", id)
+      .select()
+      .first();
+
+    if (!meal) {
+      return reply.status(404).send("Meal not found.");
+    }
+
+    const { body } = request;
+
+    const updateMealSchemaBody = z.object({
+      name: z.string().min(1),
+      description: z.string().min(1),
+      meal_time: z.string().min(1),
+      is_on_diet: z.boolean(),
+    });
+
+    const { name, description, meal_time, is_on_diet } =
+      updateMealSchemaBody.parse(body);
+
+    await db("meals")
+      .update({
+        name,
+        description,
+        meal_time,
+        is_on_diet,
+        updated_at: new Date().toISOString(),
+      })
+      .where("id", id);
+
+    return reply.status(204).send();
   });
 
-  app.delete("/:id", (request, reply) => {
-    // TODO: Apagar uma refeição
-    return reply.send("meals");
+  app.delete("/:id", async (request, reply) => {
+    const { sessionId } = request.cookies;
+
+    const getMealSchemaParam = z.object({
+      id: z.string(),
+    });
+
+    const { id } = getMealSchemaParam.parse(request.params);
+
+    const meal = await db("meals as m")
+      .join("users as u", "u.id", "m.user_id")
+      .where("u.session_id", sessionId)
+      .where("m.id", id)
+      .select()
+      .first();
+
+    if (!meal) {
+      return reply.status(404).send("Meal not found.");
+    }
+
+    await db("meals").where("id", id).delete();
+
+    return reply.status(204).send();
   });
 }
