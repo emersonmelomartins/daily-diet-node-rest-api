@@ -13,7 +13,7 @@ describe("Users routes", () => {
     execSync("npm run migrate:latest");
   });
 
-  it("should create user", async () => {
+  it("should be able to create user", async () => {
     const user = {
       email: "test.user@email.com",
       name: "Test User",
@@ -22,7 +22,7 @@ describe("Users routes", () => {
     await request(app.server).post("/users").send(user).expect(204);
   });
 
-  it("should login user", async () => {
+  it("should be able to login user", async () => {
     const user = {
       email: "test.user@email.com",
       name: "Test User",
@@ -36,7 +36,7 @@ describe("Users routes", () => {
       .expect(204);
   });
 
-  it("should return metrics countings", async () => {
+  it("should be able to return metrics countings", async () => {
     const user = {
       email: "test.user@email.com",
       name: "Test User",
