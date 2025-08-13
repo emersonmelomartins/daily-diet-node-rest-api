@@ -8,7 +8,7 @@
     "migrate:make": "npm run knex migrate:make",
     "migrate:latest": "npm run knex -- migrate:latest",
     "migrate:rollback": "npm run knex -- migrate:rollback",
-    "test": "vitest"
+    "test": "vitest --no-file-parallelism"
   },
   "keywords": [],
   "author": "",
